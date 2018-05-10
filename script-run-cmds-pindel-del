@@ -1,0 +1,11 @@
+if [ $# -ne 2 ]
+then
+  echo $0 "  dir-name   2/3/4(-NM value for pindel) "
+  exit 1
+fi
+
+cd $1
+
+ls *.pair.sorted.bam | sed 's/.pair.sorted.bam//' > pre-names
+
+nohup sh -x ../script-pindel-del   pre-names  $2 > out-script-pindel-del 2>&1 &
