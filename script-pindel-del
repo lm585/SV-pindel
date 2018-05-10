@@ -1,0 +1,27 @@
+### has directory ./dir-pindel-output
+### --NM 2
+if [ $# -ne 2 ]
+then
+  echo $0 "   pre-names-list NM(1,2,3) "
+  echo "exit ... "
+  exit 1
+fi
+
+for f in `cat $1`
+do
+  samtools  view -o $f.pair.sam $f.pair.sorted.bam 
+  awk 'BEGIN{FS = "\t"} $6 ~ /S/ {print $1}'  $f.pair.sam | sort | uniq > $f.soft.readID
+  getSam-ID   $f.soft.readID   $f.pair.sam  > $f.pair.soft.sam
+  samtools view -b -S  -t /home/fei/linyong/cucumber-vs-chinese-long/cucumber_genome.fai  -o $f.pair.soft.bam $f.pair.soft.sam
+  samtools sort $f.pair.soft.bam $f.pair.soft.sorted
+  samtools index $f.pair.soft.sorted.bam
+
+  ### pindel
+  #1. create config file
+  a=`grep "^$f.pair.sam"  /home/fei/linyong/cucumber-vs-chinese-long/44bp-size-std-max-combined | awk '{print $2 }'`
+  echo "$f.pair.soft.sorted.bam	$a	$f.pair.soft.pindel" > $f.pindel.config
+  #  ~/kevin/pindel/pindel -f cucumber_genome -i config_G8_L5_soft.txt -T 10 -x 5 -w 10 --sequencing_error_rate  0.01  --sensitivity 0.95 --maximum_allowed_mismatch_rate 0.04 --NM 3 --report_inversions false --report_duplications false --report_long_insertions false --report_close_mapped_reads true   --report_interchromosomal_events false --additional_mismatch 1 --min_perfect_match_around_BP 3 --min_num_matched_bases  30 --minimum_support_for_event 3 -c ALL -o output-soft/G8_L5_soft 1> pindel-7-22-419.txt 2> error-7-22-419.txt &
+  # NM 3 (75bp -n 2 bwa)
+  ~/kevin/pindel/pindel -f /home/fei/linyong/cucumber-vs-chinese-long/cucumber_genome -i  $f.pindel.config  -T 2  -x 5 -w 10 --sequencing_error_rate  0.01  --sensitivity 0.95 --maximum_allowed_mismatch_rate 0.04 --NM $2  --report_inversions false --report_duplications false --report_long_insertions false --report_close_mapped_reads true   --report_interchromosomal_events false --additional_mismatch 1 --min_perfect_match_around_BP 3 --min_num_matched_bases  30 --minimum_support_for_event 3 -c ALL -o $f-pindel-soft  > $f-pindel-output 2>&1
+   rm  $f.pair.sam $f.soft.readID $f.pair.soft.sam $f.pair.soft.bam  $f.pair.soft.sorted.bam* 
+done
