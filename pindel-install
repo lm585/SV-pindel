@@ -1,0 +1,16 @@
+###install htslib first - required by pindel
+download htslib clone in Windows
+ftp to Server
+unzip   htslib-develop.zip
+cd  htslib-develop
+make
+sudo make install
+
+
+git clone git://github.com/genome/pindel.git
+cd pindel
+./INSTALL /usr/local/lib/     ###contains  libhts.a  libhts.so  libhts.so.1.8  libhts.so.2  pkgconfig
+./pindel
+cd  demo
+sh   RUNME
+../pindel -i simulated_config.txt -f simulated_reference.fa -o bamtest -c ALL
