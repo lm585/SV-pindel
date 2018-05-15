@@ -1,0 +1,12 @@
+###bb
+for f in `cat  file-names-137acc-pindel-del-filtered  `
+do
+### ./dir-sv-90bp-12/dir-sv-99/99.3sv.simple.DELnnn.filt.normPair.filt.snp.filt.DELnormPileup.filt 
+  sample=`echo $f | sed 's#.*/##' | sed 's#-pindel-soft_D.simple.DELnnn.filt.DELnormPileup.filt##' `
+# 93      Chr1    8544167 8544299 Chr1    8544663 8544803 3       (B81CK7ABXX:5:1202:9135:180566#ATCACGAT,B81CK7ABXX:5:2105:9131:99997#ATCACGAT,B81CK7ABXX:5:2205:14033:138506#ATCACGAT)       F,      R,      (2,1,1) (1,2,2) (1,2,3) (1,3,2) (8544167,8544210)       (8544752,8544803)       DELETION        587.333333333333     3/3     UNBAL   3/3     3/3     (8544299,8544681)       (8544289,8544663)       1       3
+  #awk ' $1 ~ /Chr/ {print "'$sample'"  "\t"  $0}' $f | cut -f 1-8,10,11,18,19,21
+  avg=`grep "^$sample.pair.sam" ../44bp-size-std-max-combined | head -1 | cut -f 2`
+  std=`grep "^$sample.pair.sam" ../44bp-size-std-max-combined | head -1 | cut -f 3`
+  awk ' $1 ~ /Chr/ {print "'$sample'"  "\t"  $0   "'$avg'"  "\t"  "'$std'"}' $f | cut -f 1-8,10,11,18,19,21,28,29
+done
+

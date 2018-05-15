@@ -1,0 +1,56 @@
+###  no '-' in sv-126-accessions.txt
+cat      sv-pindel-137acc-combined-del    |  sed 's/	/-/g' | grep -v "^accession-" > temp-del-100bp.$$
+# 100     Chr1    11135685        11135868        Chr1    11136202        11136376        17      F,      R,      DELETION        598.235294117647        UNBAL  478     13
+
+id="0"
+
+endLine=`expr $1 + 20001`
+for del in `cat temp-del-100bp.$$`
+do
+  id=`expr $id + 1`
+  if [  $id -lt $endLine -a $id -gt $1 ]
+  then
+    sample=`echo $del | awk 'BEGIN{FS = "-";} {print $1 }'`
+    chr=`echo $del | awk 'BEGIN{FS = "-";} {print $2 }'`
+    type=`echo $del | awk 'BEGIN{FS = "-";} {print $11 }'`
+    a=`echo $del | awk 'BEGIN{FS = "-";}
+                        {
+                         if($11 == "DELETION" || $11 == "INSERTION")  
+                           printf "%d", $4;
+                         if($11 == "INVERSION" || $11 == "LARGE_DUPLI") 
+                           printf "%d", $3;
+                        }'` 
+                           
+    b=`echo $del | awk 'BEGIN{FS = "-";} 
+                       {
+                         if($11 == "DELETION" || $11 == "INSERTION")
+                           printf "%d", $6;
+                         if($11 == "INVERSION" || $11 == "LARGE_DUPLI")
+                           printf "%d", $7;
+                        }'`
+    ### echo -n $del | sed 's/-/	/g'
+    # as soon as n = 1, sample x has this del, then need to look at next sample
+    awk 'BEGIN{FS = "-"; } 
+         {
+          if($1 != "'$sample'" && $11 == "'$type'" && $2 ==  "'$chr'" )
+          {
+            if($11 == "DELETION" || $11 == "INSERTION")
+            {
+             if(!($4 > '$b' || '$a' > $6)) ## two del have overlap
+               print NR;
+            }
+            if($11 == "INVERSION" || $11 == "LARGE_DUPLI")
+            {
+             if(!($3 > '$b'  || '$a' > $7)) ## two del have overlap
+               print NR;
+            }
+          }
+         }
+        ' temp-del-100bp.$$ > temp.$$.samples
+    awk '{print '$id' "\t" $1 }' temp.$$.samples
+  fi
+done 
+
+rm temp.$$.samples  temp-del-100bp.$$
+
+ 

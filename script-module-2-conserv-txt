@@ -1,0 +1,20 @@
+##
+cat     sv-pindel-137acc-module   | sed 's/	/-/g' > temp-$$-module
+#### 223     9       11      223,14371,96115,103065,115463,144458,170437,179522,184217,199527,216134,
+for del in `cat   temp-$$-module`
+do
+  line=`echo $del | awk 'BEGIN{FS = "-";} {print $1 }'`
+  size=`echo $del | awk 'BEGIN{FS = "-";} {print $3 }'`
+  accAll=`echo $del | awk 'BEGIN{FS = "-";} {print $4 }' | sed 's/,/ /g' `
+  awk 'BEGIN {ORS = ""} NR == '$line' {print $0}' sv-pindel-137acc-combined-del | head -1
+  echo -n "	$size	"
+  ### 223  14371 96115
+  for acc in `echo $accAll`
+  do
+    awk 'BEGIN {ORS = ""} NR == '$acc' {print $1 ","}' sv-pindel-137acc-combined-del | head -1
+  done
+  echo
+done
+
+rm  temp-$$-module
+

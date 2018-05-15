@@ -1,0 +1,9 @@
+ sh script-combine-sv-sv-interact-2  0   >  network-0   2>  error-0  &
+ sh script-combine-sv-sv-interact-2  20000   >  network-20000   2>  error-20000  &
+ sh script-combine-sv-sv-interact-2  40000   >  network-40000   2>  error-40000  &
+ sh script-combine-sv-sv-interact-2  60000   >  network-60000   2>  error-60000  &
+ sh script-combine-sv-sv-interact-2  80000   >  network-80000   2>  error-80000  &
+ sh script-combine-sv-sv-interact-2  100000   >  network-100000   2>  error-100000  &
+ sh script-combine-sv-sv-interact-2  120000   >  network-120000   2>  error-120000  &
+ sh script-combine-sv-sv-interact-2  140000   >  network-140000   2>  error-140000  &
+ sh script-combine-sv-sv-interact-2  160000   >  network-160000   2>  error-160000  &

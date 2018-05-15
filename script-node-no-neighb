@@ -1,0 +1,6 @@
+for n in `cat sv-pindel-137acc-nodes-no-neighb`; 
+do 
+  awk 'BEGIN {ORS = ""} NR == '$n' ' sv-pindel-137acc-combined-del ; 
+  echo -n "	1	"
+  awk 'NR == '$n' {print $1;}'  sv-pindel-137acc-combined-del 
+done 
