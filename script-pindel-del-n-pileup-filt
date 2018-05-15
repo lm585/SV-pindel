@@ -1,0 +1,50 @@
+# 1st argumen: $sample (G10) 
+# 2nd argument: $sample.del.ins.0.line
+#
+if [ $# != 3 ]
+then
+  echo "calling $0 failed ..."
+  echo "$0 sample(G10)  pindel-del-simple-format 44(read length)"
+  exit 1
+fi
+delSv="$2"
+
+### no N bewtween two anchor window filter; applicable to all SV types
+svFilterDelNNNNNN.2 $delSv   /home/fei/linyong/cucumber-vs-chinese-long/cucumber_genome  410  410 1 -0.1  FR  $3
+
+#normal-abnom-ratio-window.2.useMap  ./$1.pair.noDup.norm.mapQgt16.sam   $delSv.DELnnn.filt   0.2 44
+
+
+
+# pileup file
+samtools view -b -S  -t /home/fei/linyong/cucumber-vs-chinese-long/cucumber_genome.fai  -o $1.pair.noDup.norm.mapQgt16.bam  $1.pair.noDup.norm.mapQgt16.sam
+samtools sort $1.pair.noDup.norm.mapQgt16.bam $1.pair.noDup.norm.mapQgt16.sorted
+rm  $1.pair.noDup.norm.mapQgt16.bam  $1.pair.noDup.norm.mapQgt16.sam
+samtools mpileup  -Q 0 -d 1000000 -f    /home/fei/linyong/cucumber-vs-chinese-long/cucumber_genome  $1.pair.noDup.norm.mapQgt16.sorted.bam > $1.norm.pileup
+
+chr="Chr1 Chr2 Chr3 Chr6 Chr7 Chr4 Chr5"
+pileFile="$1.norm.pileup"
+rm $delSv.DELnnn.filt.DELnormPileup.filt 
+
+for c in `echo $chr`
+do
+   cmd="grep "^$c" $pileFile "
+   echo "$cmd > chr-$c.pileup"
+   $cmd > chr-$c.pileup
+   ####### 1st window in a link only has ch05
+   ### deletion; insertion; inversion -- they are all in same chromosome
+   awk '$1 == "'$c'"'   $delSv.DELnnn.filt   > temp-defined.links.simple
+   ####### deletion links will be filtered out if
+   ####### >= 20 bp in the deleted region are covered by normal pair reads
+   ####### AND >= 5% of nonN deleted region are covered by normal pair reads
+   ####### AND normal pair reads coverage at a position >= 2
+   svFilterDelNormPE temp-defined.links.simple    /home/fei/linyong/cucumber-vs-chinese-long/cucumber_genome  chr-$c.pileup  -20  0.05  FR $3   2
+   ### produce filtered deletion links in ch05, and the other types of SV links with 1st window being ch05
+   cat temp-defined.links.simple.DELnormPileup.filt  >> $delSv.DELnnn.filt.DELnormPileup.filt
+   rm  temp-defined.links.simple.DELnormPileup.filt   chr-$c.pileup  
+done
+
+rm chr-*.pileup  *.norm.pileup *.pair.noDup.ab.mapQgt16.sam.sort.byID  $1.pair.noDup.norm.mapQgt16.bam    temp-defined.links.simple
+rm ./$1.pair.noDup.norm.mapQgt16.sam
+##### 2280 deletions; 2.3G sam file;3.8G pileup file; 15% memory; 30 min
+##svFilterDelNormPE $1.3sv.simple.DELnnn.filt.normPair.filt.snp.filt /home/linyong/cucumber_reseq_first/cucumber_genome ../$1.pair.noDup.norm.mapQgt16.pileup -1 0.05 FR 44 2 > out-delNormPE-2
