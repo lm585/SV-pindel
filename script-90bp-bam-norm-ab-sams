@@ -1,0 +1,45 @@
+# pre-names
+### 44bp-size-std-max 
+### sv.conf
+### cucumber.len
+
+for f in `echo "$1"`
+do
+  echo $f
+  samtools sort -n ../$f.pair.sorted.bam $f.pair
+  samtools view -h -o $f.pair.sam  $f.pair.bam
+  rm $f.pair.bam
+  nOfSVDinputCmds=`top -u linyong -b -n 1 -c | grep "SVDetectInput.6" | grep -v "grep" | wc -l`
+  while [ $nOfSVDinputCmds -gt 1 ] ### >= 2 SVDetectInput.6 already running
+  do
+    sleep 60
+    nOfSVDinputCmds=`top -u linyong -b -n 1 -c | grep "SVDetectInput.6" | grep -v "grep" | wc -l`
+  done
+  SVDetectInput.6  $f.pair.sam $f.pair.noDup.sam 3 
+  rm  $f.pair.sam 
+  awk '$2 != 99 && $2 != 147 && $2 != 83 && $2 != 163'  $f.pair.noDup.sam >  $f.pair.noDup.ab.sam
+  awk '!($2 != 99 && $2 != 147 && $2 != 83 && $2 != 163)'  $f.pair.noDup.sam >  $f.pair.noDup.norm.sam
+  a=`grep "^$f.pair.sam" ../44bp-size-std-max-combined  | awk '{print $2 - 1 - ($4 - $2)}'`
+  b="-$a"
+  awk '$9 <= '$a'  && $9 >= '$b' ' $f.pair.noDup.norm.sam  >> $f.pair.noDup.ab.sam
+  awk '!($9 <= '$a'  && $9 >= '$b')' $f.pair.noDup.norm.sam > temp
+  mv temp $f.pair.noDup.norm.sam
+  awk '$5 > 16 '  $f.pair.noDup.norm.sam  > $f.pair.noDup.norm.mapQgt16.sam
+  rm  $f.pair.noDup.norm.sam 
+  a=`grep "^$f.pair.sam"  ../44bp-size-std-max-combined | awk '{print $2 - 3 * $3}'`
+  c=`grep "^$f.pair.sam"  ../44bp-size-std-max-combined  | awk '{print $2 + 3 * $3}'`
+  b="-$a"
+  d="-$c"
+  awk '($9 >= '$a' && $9 <= '$c' ) || ($9 >= '$d' && $9 <= '$b')' $f.pair.noDup.norm.mapQgt16.sam > temp
+  mv temp $f.pair.noDup.norm.mapQgt16.sam 
+  awk '$5 > 16 {print $1}'  $f.pair.noDup.ab.sam   | sort | uniq -d > temp-uniq-sort-id
+  sort -t '	'  +0 -1  $f.pair.noDup.ab.sam  > temp-sorted.sam
+  join -t '	'  -1 1  temp-uniq-sort-id -2 1 temp-sorted.sam > $f.pair.noDup.ab.mapQgt16.sam
+  rm  temp-uniq-sort-id  temp-sorted.sam
+  rm $f.pair.noDup.ab.sam $f.pair.noDup.norm.sam $f.pair.noDup.sam $f.pair.noDup.ab.mapQgt16.sam  $f.pair.sam $f.pair.bam
+
+done
+
+
+
+
