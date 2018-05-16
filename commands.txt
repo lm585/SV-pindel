@@ -1,0 +1,59 @@
+sh  script-combine-sv >   sv-126-hardw-accessions.txt
+# /home/linyong/linyong-under-fei-account/bamboo/ directory under boyce server
+# this command creates 
+# CitrusA chr1    84296   84610   chr1    85256   85471   6       F,      R,      DELETION        975.5   UNBAL   260     93
+# add sample name, insert avg, insert std
+
+
+sh   script-combine-sv-sv-interact-2 0 >  sv-combined-3sv-net
+# no '-', no 'accession' in the sv-126-hardw-accessions.txt
+# create interaction file
+
+ get-module-net            sv-combined-3sv-net sv-combined-3sv-module
+
+ sh    script-module-2-conserv-txt > sv-combined-3sv-conserv
+
+cut -f 1  sv-combined-3sv-net > temp
+cut -f 2  sv-combined-3sv-net >> temp
+cat temp | sort | uniq > temp-node-neighb
+awk '{print NR}'  sv-126-hardw-accessions.txt > temp-all-nodes
+cat temp-node-neighb temp-all-nodes | sort | uniq -u > temp-nodes-no-neighb
+
+sh  script-node-no-neighb >> sv-combined-3sv-conserv
+
+sv-print-link-conserv.2   pre-names sv-combined-3sv-conserv     sv-126-hardw-acc.2windows.table
+
+nohup sh -x script-find-ins-del-unknown 15 > out-script-find-ins-del-unknown-col15 2>&1 &
+# from within, calling script-3sv-check-unknown 
+# need sample.pair.noDup.norm.mapQgt16.sam & sample.pair.noDup.norm.mapQgt16.pileup for filtering
+# normal-abnom-ratio-window.2.useMap  param same as first svfilt
+# svFilterDelNormPE param same as first svfilt
+
+cut -f 1-14 ./sv-126-hardw-acc.2windows.table > temp
+paste temp dir-check-miss-CitrusA/CitrusA.sv.detect.unknow.1colum  dir-check-miss-CitrusB/CitrusB.sv.detect.unknow.1colum > sv-126-hardw-acc.2windows.unknown.table
+
+
+--------------------------------------------------for tandem duplication---------------------------
+
+svFiltSeqDepth.2.avg ../CitrusA.pair.noDup.norm.mapQgt16.pileup  ../chr-name-length    CitrusA.dup.simple   9999999 1 > temp.txt
+
+grep LARGE_DUPLI   temp.txt  |  awk 'BEGIN{FS = "\t"} $17 / $13 >= 1.5 && $18 / $14 >= 1.5 ' >   CitrusA.dup.simple.depth.filt
+# check if genome median == 0
+
+sh  script-combine-dup | grep   LARGE_DUPLI > temp-dup-combined
+# CitrusA chr1    3767108 3767449 chr1    3771340 3771862 70      R,      F,      LARGE_DUPLI     4353.77142857143        UNBAL   260     93
+# results should be appended to sv-126-hardw-accessions.txt first
+
+
+
+
+
+
+
+
+
+
+
+
+
+
