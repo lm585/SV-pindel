@@ -1,0 +1,51 @@
+# under dir /home/linyong/cucumber_reseq_first/
+# assuming 90 bp read length
+# 1st argument: which field that corresponds to the sample
+
+if [ $# -ne 1 ]
+then
+  echo "calling $0 failed ...."
+  exit 1
+fi
+
+nf="$1"
+sample=`head -1   sv-126-hardw-acc.2windows.table | cut -f "$nf"`
+awk 'BEGIN {FS = "\t"; OFS = "\t";} {if($10 == "DELETION" && $'$nf' == 0) print $0}'   sv-126-hardw-acc.2windows.table | cut -f 1-6 >  $sample.del.0
+awk 'BEGIN{ORS = ""} {print $0 "\t" 1 "\t"; system("head -1 /home/linyong/tempDir/del-1-line-sv-simple | cut -f 8-30"); }'  $sample.del.0  > $sample.del.0.line  
+awk 'BEGIN {FS = "\t"; OFS = "\t";} {if($10 == "INSERTION" && $'$nf' == 0) print $0}'   sv-126-hardw-acc.2windows.table | cut -f 1-6 >  $sample.ins.0
+awk 'BEGIN{ORS = ""} {print $0 "\t" 1 "\t"; system("head -1 /home/linyong/tempDir/ins-1-line-sv-simple | cut -f 8-30"); }'  $sample.ins.0  > $sample.ins.0.line
+cat $sample.del.0.line  $sample.ins.0.line >  $sample.del.ins.0.line
+ls -l $sample.del.0 $sample.ins.0 $sample.del.0.line  $sample.ins.0.line   $sample.del.ins.0.line
+rm $sample.del.0 $sample.ins.0 $sample.del.0.line  $sample.ins.0.line 
+rm -r -f dir-check-miss-$sample
+mkdir dir-check-miss-$sample
+cd dir-check-miss-$sample
+sh -x ../script-90bp-bam-norm-ab-sams-noSort  $sample > out-script-90bp-bam-norm-ab-sams 2>&1 
+mv ../$sample.del.ins.0.line ./
+sh -x ../script-3sv-check-unknown $sample  $sample.del.ins.0.line > out-script-3sv-check-unknown 2>&1 
+cut -f 1-6,10,$nf ../sv-126-hardw-acc.2windows.table > temp-$sample-orig
+file="$sample".sv.detect.unknow.1colum
+echo "$sample" > $file
+cat temp-$sample-orig | awk 'NR > 1' |  while read line
+do
+  ### left window chr start end right window chr start end sv type 100
+  ### Chr1 51481 51838 Chr1 52787 53150 DELETION 0
+  detect=`echo "$line" | cut -f 8 `
+  type=`echo "$line" | cut -f 7 `
+  chrPos=`echo "$line" | cut -f 1-6 `
+  if [ $detect -eq 1 ]
+  then
+    echo "1" >> $file
+  else
+    res=`grep "^$chrPos" "$sample".del.ins.0.line.DELnnn.filt.normPair.filt.DELnormPileup.filt | awk 'BEGIN {FS = "\t"} $17 == "'$type'"' | wc -l `
+    if [ $res -gt 0 ]
+    then
+      echo "N" >> $file
+    else
+      echo "0" >> $file
+    fi
+  fi
+done
+rm temp-$sample-orig
+### cd ..
+
